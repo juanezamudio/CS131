@@ -95,10 +95,7 @@ data IntTree = Empty | Node IntTree Int IntTree deriving (Eq,Show)
 
 isLeaf :: IntTree -> Bool
 isLeaf Empty = True
-isLeaf (Node l x r) =
-  if l == Empty && r == Empty
-    then True
-    else False
+isLeaf (Node l _ r) = l == Empty && r == Empty
 
 -- Write a function `sumTree` that sums up all of the values in an
 -- `IntTree`.
@@ -107,11 +104,11 @@ sumTree :: IntTree -> Int
 sumTree Empty = 0
 sumTree (Node l x r) = x + sumTree l + sumTree r
 
-child3 = Node Empty 7 Empty
-child2 = Node child3 10 Empty
-child1 = Node Empty 2 Empty
-child = Node Empty 1 child1
-tree = Node child 5 child2
+-- child3 = Node Empty 7 Empty
+-- child2 = Node child3 10 Empty
+-- child1 = Node Empty 2 Empty
+-- child = Node Empty 1 child1
+-- tree = Node child 5 child2
 
 -- Write a function `fringe` that yields the fringe of the tree from
 -- left to right, i.e., the list of values in the leaves of the tree,
@@ -134,8 +131,14 @@ fringe (Node l x r) =
 -- algorithm](https://en.wikipedia.org/wiki/Insertion_sort). You might
 -- want to write a helper function.
 
--- > insertionSort :: [Int] -> [Int]
--- > insertionSort = undefined
+insertionSort :: [Int] -> [Int]
+insertionSort []         = []
+insertionSort [a]        = [a]
+insertionSort (x:xs) = swap x (insertionSort xs)
+  where swap a []             = [a]
+        swap a (y:ys) | a < y = a:y:ys
+                      | otherwise = y:a:ys
+
 
 -- **Problem 4: binary search trees **
 --
@@ -162,14 +165,16 @@ fringe (Node l x r) =
 -- holds a value `x`. We'll look at this more deeply in the next
 -- assignment, when we talk about datatypes.
 
--- > maybeBounded :: Maybe Int -> Maybe Int -> Int -> Bool
--- > maybeBounded Nothing Nothing x = True
--- > maybeBounded Nothing (Just upper) x = x < upper
--- > maybeBounded (Just lower) Nothing x = lower < x
--- > maybeBounded (Just lower) (Just upper) x = lower < x && x < upper
---
--- > isBST :: IntTree -> Bool
--- > isBST = undefined
+-- maybeBounded :: Maybe Int -> Maybe Int -> Int -> Bool
+-- maybeBounded Nothing Nothing x = True
+-- maybeBounded Nothing (Just upper) x = x < upper
+-- maybeBounded (Just lower) Nothing x = lower < x
+-- maybeBounded (Just lower) (Just upper) x = lower < x && x < upper
+
+-- isBST :: IntTree -> Bool
+-- isBST Empty = False
+-- isBST Node (Empty _ Empty) = True
+-- isBST Node (l x r)
 
 -- Write a function `insertBST` that performs BST insert. You may
 -- assume your input is a BST.
@@ -206,14 +211,16 @@ fringe (Node l x r) =
 --
 -- Define a function `sumUp'` that sums up a list of numbers.
 --
--- > sumUp' :: [Int] -> Int
--- > sumUp' l = undefined
+sumUp' :: [Int] -> Int
+sumUp' [] = 0
+sumUp' (x:xs) = foldl (+) x xs
 --
 -- Define a function `evens'` that selects out the even numbers from a
 -- list.
 --
--- > evens' :: [Int] -> [Int]
--- > evens' l = undefined
+evens' :: [Int] -> [Int]
+evens' [] = []
+evens' l = filter (even (\x -> x)) l
 --
 -- Define a function `incAll'` that increments a list of numbers by
 -- one.
