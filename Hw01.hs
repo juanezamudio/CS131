@@ -134,10 +134,12 @@ fringe (Node l x r) =
 insertionSort :: [Int] -> [Int]
 insertionSort []         = []
 insertionSort [a]        = [a]
-insertionSort (x:xs) = swap x (insertionSort xs)
-  where swap a []             = [a]
-        swap a (y:ys) | a < y = a:y:ys
-                      | otherwise = y:a:ys
+insertionSort (x:xs) = insert x (insertionSort xs)
+
+insert :: Int -> [Int] -> [Int]
+insert a []             = [a]
+insert a (y:ys) | y > a = a:y:ys
+              | otherwise = y : insert a ys
 
 
 -- **Problem 4: binary search trees **
@@ -220,37 +222,47 @@ sumUp' (x:xs) = foldl (+) x xs
 --
 evens' :: [Int] -> [Int]
 evens' [] = []
-evens' l = filter (even (\x -> x)) l
+evens' l = filter (\x -> even x) l
 --
 -- Define a function `incAll'` that increments a list of numbers by
 -- one.
 --
--- > incAll' :: [Int] -> [Int]
--- > incAll' l = undefined
+incAll' :: [Int] -> [Int]
+incAll' [] = []
+incAll' l = map (\x -> x + 1) l
 --
 -- Define a function `incBy'` that takes a number and then increments
 -- a list of numbers *by that number*.
 --
--- > incBy' :: Int -> [Int] -> [Int]
--- > incBy' n l = undefined
+incBy' :: Int -> [Int] -> [Int]
+incBy' _ [] = []
+incBy' n l = map (\x -> x + n) l
 --
 -- Define a function `rev'` that reverses a list. Don't use
 -- anything but a folding function (your choice), the list
 -- constructors, and lambdas/higher-order functions.
 --
--- > rev' :: [Int] -> [Int]
--- > rev' l = undefined
+rev' :: [Int] -> [Int]
+rev' [] = []
+rev' (x:xs) = foldr (\y ys -> ys ++ [y]) [] (x:xs)
+
 --
 -- Define two versions of the function `append'` that appends two
 -- lists.  One, `appendr`, should use `foldr`; the other,
 -- `appendl`, should use `foldl`. You can use the list
 -- constructors, higher-order functions, and `rev'`.
 --
--- > appendr :: [Int] -> [Int] -> [Int]
--- > appendr l1 l2 = undefined
--- >
--- > appendl :: [Int] -> [Int] -> [Int]
--- > appendl l1 l2 = undefined
+appendr :: [Int] -> [Int] -> [Int]
+appendr [] [] = []
+appendr (x:xs) [] = (x:xs)
+appendr [] (y:ys) = (y:ys)
+appendr (x:xs) (y:ys) = rev' (foldr (\m n -> rev' m ++ rev' n) (x:xs) [(y:ys)])
+
+appendl :: [Int] -> [Int] -> [Int]
+appendl [] [] = []
+appendl (x:xs) [] = (x:xs)
+appendl [] (y:ys) = (y:ys)
+appendl (x:xs) (y:ys) = foldl (\m n -> m ++ n) (x:xs) [(y:ys)]
 --
 -- **Problem 6: defining higher-order functions**
 --
