@@ -167,16 +167,19 @@ insert a (y:ys) | y > a = a:y:ys
 -- holds a value `x`. We'll look at this more deeply in the next
 -- assignment, when we talk about datatypes.
 
--- maybeBounded :: Maybe Int -> Maybe Int -> Int -> Bool
--- maybeBounded Nothing Nothing x = True
--- maybeBounded Nothing (Just upper) x = x < upper
--- maybeBounded (Just lower) Nothing x = lower < x
--- maybeBounded (Just lower) (Just upper) x = lower < x && x < upper
+maybeBounded :: Maybe Int -> Maybe Int -> Int -> Bool
+maybeBounded Nothing Nothing x = True
+maybeBounded Nothing (Just upper) x = x < upper
+maybeBounded (Just lower) Nothing x = lower < x
+maybeBounded (Just lower) (Just upper) x = lower < x && x < upper
 
--- isBST :: IntTree -> Bool
--- isBST Empty = False
--- isBST Node (Empty _ Empty) = True
--- isBST Node (l x r)
+isBST :: IntTree -> Bool
+isBST tree = check tree
+
+check :: IntTree -> Maybe Int -> Maybe Int-> Bool
+check Empty Nothing Nothing = False
+check Empty (Just lower) (Just upper) = maybeBounded lower upper
+check (Node l a r) (Just lower) (Just upper) = maybeBounded lower upper a
 
 -- Write a function `insertBST` that performs BST insert. You may
 -- assume your input is a BST.
