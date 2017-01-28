@@ -173,19 +173,25 @@ maybeBounded Nothing (Just upper) x = x < upper
 maybeBounded (Just lower) Nothing x = lower < x
 maybeBounded (Just lower) (Just upper) x = lower < x && x < upper
 
-isBST :: IntTree -> Bool
-isBST tree = check tree
+--isBST :: IntTree -> Bool
+--isBST tree = check tree
 
-check :: IntTree -> Maybe Int -> Maybe Int-> Bool
-check Empty Nothing Nothing = False
-check Empty (Just lower) (Just upper) = maybeBounded lower upper
-check (Node l a r) (Just lower) (Just upper) = maybeBounded lower upper a
+--check :: IntTree -> Maybe Int -> Maybe Int-> Bool
+--check Empty Nothing Nothing = True --When a tree is empty, it doesn't matter what the bounds are because there are no leaves to be bounded
+--check Empty lower upper = True
+--check (Node l a r) lower upper = maybeBounded lower upper a 
+--check l lower a = maybeBounded lower a  --Not sure if the Int should be a in this case and the case below
+--check r a upper = maybeBounded a upper  
 
 -- Write a function `insertBST` that performs BST insert. You may
 -- assume your input is a BST.
 
--- > insertBST :: Int -> IntTree -> IntTree
--- > insertBST = undefined
+insertBST :: Int -> IntTree -> IntTree
+insertBST a Empty = Node Empty a Empty
+insertBST a (Node l x r) | a == x = (Node l x r) -- If the thing you want to insert is equal to the root, just return the original tree
+						| a < x = Node (insertBST a l) x r -- If the thing you want to insert is less than the root, check the left subtree. We need to insert at a leaf, so recurse down the left subtree. Root and right subtree are left the same
+						| a > x = Node l x (insertBST a r) -- If the thing you want to insert is greater than the root, check the right subtree. We need to insert at a leaf, so recurse down the right subtree. Root and left subtree are left the same. 
+
 
 -- Write a function `deleteBST` that removes a given value from a
 -- BST. You may assume your input is a BST. Feel free to look up the
@@ -201,8 +207,15 @@ check (Node l a r) (Just lower) (Just upper) = maybeBounded lower upper a
 
 -- You are, as always, free to introduce any helper functions you might need.
 --
--- > deleteBST :: Int -> IntTree -> IntTree
--- > deleteBST = undefined
+-- deleteBST :: Int -> IntTree -> IntTree
+-- deleteBST a Empty = Empty
+-- deleteBST a (Node l x r) | a < x = Node (deleteBST a l) x r 
+-- deleteBST a (Node l x r) | a > x = Node l x (deleteBST a r)
+-- deleteBST a (Node l x r) | a == x = 
+
+-- CASE1: Node to be removed has no children
+-- CASE2: Node to be removed has 1 child
+-- CASE3: Node to be removed has 2 children
 
 -- **Problem 5: maps and folds**
 --
@@ -276,23 +289,28 @@ appendl (x:xs) (y:ys) = foldl (\m n -> m ++ n) (x:xs) [(y:ys)]
 --
 -- Define `map1` using natural recursion.
 --
--- > map1 :: (a -> b) -> [a] -> [b]
--- > map1 = undefined
+map1 :: (a -> b) -> [a] -> [b]
+map1 _ [] = []
+map1 f (x:xs) = f x : map f xs
 --
 -- Define `map2` using a folding function.
 --
--- > map2 :: (a -> b) -> [a] -> [b]
--- > map2 f l = undefined
+map2 :: (a -> b) -> [a] -> [b]
+map2 f xs = foldr (\x xs -> f x: xs) [] xs
+
 --
 -- Define `filter1` using natural recursion.
---
+
 -- > filter1 :: (a -> Bool) -> [a] -> [a]
--- > filter1 = undefined
---
+-- > filter1 _ [] = []
+-- > filter1 f (x:xs) | f x = x : (filter1 f xs)
+-- >				| otherwise filter1 f xs 
+
 -- Define `filter2` using a folding function.
 --
--- > filter2 :: (a -> Bool) -> [a] -> [a]
--- > filter2 p l = undefined
+filter2 :: (a -> Bool) -> [a] -> [a]
+filter2 
+filter2 p l = undefined
 --
 -- **Problem 7: polymorphic datatypes **
 --
