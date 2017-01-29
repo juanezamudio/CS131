@@ -168,29 +168,40 @@ insert a (y:ys) | y > a = a:y:ys
 -- assignment, when we talk about datatypes.
 
 maybeBounded :: Maybe Int -> Maybe Int -> Int -> Bool
-maybeBounded Nothing Nothing x = True
+maybeBounded Nothing Nothing _ = True
 maybeBounded Nothing (Just upper) x = x < upper
 maybeBounded (Just lower) Nothing x = lower < x
 maybeBounded (Just lower) (Just upper) x = lower < x && x < upper
 
---isBST :: IntTree -> Bool
---isBST tree = check tree
+isBST :: IntTree -> Bool
+isBST Empty = True
+isBST (Node l x r) = check (Node l x r) Nothing Nothing
 
---check :: IntTree -> Maybe Int -> Maybe Int-> Bool
---check Empty Nothing Nothing = True --When a tree is empty, it doesn't matter what the bounds are because there are no leaves to be bounded
---check Empty lower upper = True
---check (Node l a r) lower upper = maybeBounded lower upper a 
---check l lower a = maybeBounded lower a  --Not sure if the Int should be a in this case and the case below
---check r a upper = maybeBounded a upper  
+check :: IntTree -> Maybe Int -> Maybe Int-> Bool
+check Empty Nothing Nothing = True --When a tree is empty, it doesn't matter what the bounds are because there are no leaves to be bounded
+check Empty _ _ = True
+check (Node l a r) lower upper | maybeBounded lower upper a = (check l lower (Just a)) && (check r (Just a) upper)
+                               | otherwise = False
+
+-- rootT = (Node Empty 10 Empty)
+-- rootCheck = (Node level1l 10 right)
+-- level1l = (Node Empty 5 Empty)
+-- level2l = (Node level3l 3 level3r)
+-- level2r = (Node level3l 6 level3r)
+-- level3l = Empty
+-- level3r = Empty
+-- right = (Node Empty 6 Empty)
+-- rr = (Node Empty 30 Empty)
+
 
 -- Write a function `insertBST` that performs BST insert. You may
 -- assume your input is a BST.
 
-insertBST :: Int -> IntTree -> IntTree
-insertBST a Empty = Node Empty a Empty
-insertBST a (Node l x r) | a == x = (Node l x r) -- If the thing you want to insert is equal to the root, just return the original tree
-						| a < x = Node (insertBST a l) x r -- If the thing you want to insert is less than the root, check the left subtree. We need to insert at a leaf, so recurse down the left subtree. Root and right subtree are left the same
-						| a > x = Node l x (insertBST a r) -- If the thing you want to insert is greater than the root, check the right subtree. We need to insert at a leaf, so recurse down the right subtree. Root and left subtree are left the same. 
+-- insertBST :: Int -> IntTree -> IntTree
+-- insertBST a Empty = (Node Empty a Empty)
+-- insertBST a (Node l x r) | (a == x) = (Node l x r) -- If the thing you want to insert is equal to the root, just return the original tree
+-- 						             | a < x = (Node (insertBST a l) x r) -- If the thing you want to insert is less than the root, check the left subtree. We need to insert at a leaf, so recurse down the left subtree. Root and right subtree are left the same
+-- 						             | a > x = (Node l x (insertBST a r)) -- If the thing you want to insert is greater than the root, check the right subtree. We need to insert at a leaf, so recurse down the right subtree. Root and left subtree are left the same.
 
 
 -- Write a function `deleteBST` that removes a given value from a
@@ -209,9 +220,17 @@ insertBST a (Node l x r) | a == x = (Node l x r) -- If the thing you want to ins
 --
 -- deleteBST :: Int -> IntTree -> IntTree
 -- deleteBST a Empty = Empty
--- deleteBST a (Node l x r) | a < x = Node (deleteBST a l) x r 
+-- deleteBST a (Node l x r) | a < x = Node (deleteBST a l) x r
 -- deleteBST a (Node l x r) | a > x = Node l x (deleteBST a r)
--- deleteBST a (Node l x r) | a == x = 
+-- deleteBST a (Node l x r) | a == x =
+--   case (l, r) of
+--        (Empty, Empty) -> Empty
+--        (Empty, r) -> r
+--        (l, Empty) -> l
+--        (l, r) ->
+--
+-- min :: IntTree -> Int
+-- min (Node l x r) |
 
 -- CASE1: Node to be removed has no children
 -- CASE2: Node to be removed has 1 child
@@ -291,26 +310,25 @@ appendl (x:xs) (y:ys) = foldl (\m n -> m ++ n) (x:xs) [(y:ys)]
 --
 map1 :: (a -> b) -> [a] -> [b]
 map1 _ [] = []
-map1 f (x:xs) = f x : map f xs
+map1 f (x:xs) = f x : map1 f xs
 --
 -- Define `map2` using a folding function.
 --
 map2 :: (a -> b) -> [a] -> [b]
-map2 f xs = foldr (\x xs -> f x: xs) [] xs
+map2 f xs = foldr (\y ys -> f y: ys) [] xs
 
 --
 -- Define `filter1` using natural recursion.
 
--- > filter1 :: (a -> Bool) -> [a] -> [a]
--- > filter1 _ [] = []
--- > filter1 f (x:xs) | f x = x : (filter1 f xs)
--- >				| otherwise filter1 f xs 
+filter1 :: (a -> Bool) -> [a] -> [a]
+filter1 _ [] = []
+filter1 f (x:xs) | f x = x : (filter1 f xs)
+                 | otherwise = filter1 f xs
 
 -- Define `filter2` using a folding function.
 --
 filter2 :: (a -> Bool) -> [a] -> [a]
-filter2 
-filter2 p l = undefined
+filter2 f xs = foldr (\y ys -> if f y then y:ys else ys) [] xs
 --
 -- **Problem 7: polymorphic datatypes **
 --
@@ -335,8 +353,14 @@ filter2 p l = undefined
 -- higher-order function argument returns `Just x`, but filters out
 -- results where the function returns `Nothing`.
 --
--- > mapMaybe :: (a -> Maybe b) -> [a] -> [b]
--- > mapMaybe = undefined
+-- mapMaybe :: (a -> Maybe b) -> [a] -> [b]
+-- mapMaybe _ [] = []
+-- mapMaybe f (x:xs) = filter removeNothing (map f (x:xs))
+--   where removeNothing (y:ys) | y == Nothing =
+
+myFunc :: Int -> Maybe Char
+myFunc a | a > 0 = Just 'C'
+         | otherwise = Nothing
 --
 -- The pair datatype allows us to aggregate values: values of type
 -- `(a,b)` will have the form `(x,y)`, where `x` has type `a` and `y` has
@@ -345,30 +369,42 @@ filter2 p l = undefined
 -- Write a function `swap` that takes a pair of type `(a,b)` and returns
 -- a pair of type `(b,a)`.
 --
--- > swap :: (a,b) -> (b,a)
--- > swap = undefined
+swap :: (a,b) -> (b,a)
+swap (a,b) = (b,a)
 --
 -- Write a function `pairUp` that takes two lists and returns a list of
 -- paired elements. If the lists have different lengths, return a list of
 -- the shorter length. (This is called `zip` in the prelude. Don't define
 -- this function using `zip`!)
 --
--- > pairUp :: [a] -> [b] -> [(a,b)]
--- > pairUp = undefined
+pairUp :: [a] -> [b] -> [(a,b)]
+pairUp [] [] = []
+pairUp _ [] = []
+pairUp [] _ = []
+pairUp (x:xs) (y:ys) = (x,y) : pairUp xs ys
 --
 -- Write a function `splitUp` that takes a list of pairs and returns a
 -- pair of lists. (This is called `unzip` in the prelude. Don't define
 -- this function using `unzip`!)
 --
--- > splitUp :: [(a,b)] -> ([a],[b])
--- > splitUp = undefined
+splitUp :: [(a,b)] -> ([a],[b])
+splitUp [] = ([], [])
+splitUp ((x,y):xs) =
+  let
+    (ys, zs) = splitUp xs
+    in (x:ys,y:zs)
 --
 -- Write a function `sumAndLength` that simultaneously sums a list and
 -- computes its length. You can define it using natural recursion or as a
 -- fold, but---traverse the list only once!
 --
--- > sumAndLength :: [Int] -> (Int,Int)
--- > sumAndLength l = undefined
+sumAndLength :: [Int] -> (Int,Int)
+sumAndLength [] = (0, 0)
+sumAndLength (x:xs) =
+  let
+    (s, l) = sumAndLength xs
+    in (x + s, acc l)
+    where acc a = a + 1
 --
 -- **Problem 8: defining polymorphic datatypes**
 --
