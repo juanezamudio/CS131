@@ -184,24 +184,29 @@ check (Node l a r) lower upper | maybeBounded lower upper a = (check l lower (Ju
                                | otherwise = False
 
 -- rootT = (Node Empty 10 Empty)
--- rootCheck = (Node level1l 10 right)
--- level1l = (Node Empty 5 Empty)
--- level2l = (Node level3l 3 level3r)
--- level2r = (Node level3l 6 level3r)
+rootCheck :: IntTree
+level1l :: IntTree
+level2l :: IntTree
+level2r :: IntTree
+right :: IntTree
+rootCheck = (Node level1l 10 right)
+level1l = (Node level2l 5 level2r)
+level2l = (Node Empty 3 Empty)
+level2r = (Node Empty 6 Empty)
 -- level3l = Empty
 -- level3r = Empty
--- right = (Node Empty 6 Empty)
+right = (Node Empty 15 Empty)
 -- rr = (Node Empty 30 Empty)
 
 
 -- Write a function `insertBST` that performs BST insert. You may
 -- assume your input is a BST.
 
--- insertBST :: Int -> IntTree -> IntTree
--- insertBST a Empty = (Node Empty a Empty)
--- insertBST a (Node l x r) | (a == x) = (Node l x r) -- If the thing you want to insert is equal to the root, just return the original tree
--- 						             | a < x = (Node (insertBST a l) x r) -- If the thing you want to insert is less than the root, check the left subtree. We need to insert at a leaf, so recurse down the left subtree. Root and right subtree are left the same
--- 						             | a > x = (Node l x (insertBST a r)) -- If the thing you want to insert is greater than the root, check the right subtree. We need to insert at a leaf, so recurse down the right subtree. Root and left subtree are left the same.
+insertBST :: Int -> IntTree -> IntTree
+insertBST a Empty = (Node Empty a Empty)
+insertBST a (Node l x r) | (a == x) = (Node l x r)
+                         | a < x = (Node (insertBST a l) x r)
+                         | a > x = (Node l x (insertBST a r))
 
 
 -- Write a function `deleteBST` that removes a given value from a
@@ -218,20 +223,25 @@ check (Node l a r) lower upper | maybeBounded lower upper a = (check l lower (Ju
 
 -- You are, as always, free to introduce any helper functions you might need.
 --
--- deleteBST :: Int -> IntTree -> IntTree
--- deleteBST a Empty = Empty
--- deleteBST a (Node l x r) | a < x = Node (deleteBST a l) x r
--- deleteBST a (Node l x r) | a > x = Node l x (deleteBST a r)
--- deleteBST a (Node l x r) | a == x =
---   case (l, r) of
---        (Empty, Empty) -> Empty
---        (Empty, r) -> r
---        (l, Empty) -> l
---        (l, r) ->
+deleteBST :: Int -> IntTree -> IntTree
+deleteBST _ Empty = Empty
+deleteBST a (Node l x r) | a < x = Node (deleteBST a l) x r
+deleteBST a (Node l x r) | a > x = Node l x (deleteBST a r)
+deleteBST a (Node l x r) | a == x =
+  case (l, r) of
+       (Empty, Empty) -> Empty
+       (Empty, r) -> r
+       (l, Empty) -> l
+       (l, r) -> (smallest a r)
 --
--- min :: IntTree -> Int
--- min (Node l x r) |
+smallest :: Int -> IntTree -> IntTree
+smallest _ Empty = Empty
+smallest a (Node l x r) | a < x = (Node l a r)
+                        | otherwise = (Node l x r)
 
+--  5
+-- / \
+--3  6
 -- CASE1: Node to be removed has no children
 -- CASE2: Node to be removed has 1 child
 -- CASE3: Node to be removed has 2 children
@@ -353,13 +363,22 @@ filter2 f xs = foldr (\y ys -> if f y then y:ys else ys) [] xs
 -- higher-order function argument returns `Just x`, but filters out
 -- results where the function returns `Nothing`.
 --
--- mapMaybe :: (a -> Maybe b) -> [a] -> [b]
--- mapMaybe _ [] = []
--- mapMaybe f (x:xs) = filter removeNothing (map f (x:xs))
---   where removeNothing (y:ys) | y == Nothing =
+mapMaybe :: (a -> Maybe b) -> [a] -> [b]
+mapMaybe _ [] = []
+mapMaybe f (x:xs) = map fromMaybe (removeNothing (map f (x:xs)))
 
-myFunc :: Int -> Maybe Char
-myFunc a | a > 0 = Just 'C'
+removeNothing :: [Maybe b] -> [Maybe b]
+removeNothing [] = []
+removeNothing (y:ys) =
+  case y of
+  Nothing -> removeNothing ys
+  (Just y) -> (Just y) : removeNothing ys
+
+fromMaybe :: Maybe b -> b
+fromMaybe (Just b) = b
+
+myFunc :: Char -> Maybe Int
+myFunc a | a == 'a' = Just 1
          | otherwise = Nothing
 --
 -- The pair datatype allows us to aggregate values: values of type
