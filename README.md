@@ -1,2 +1,2 @@
-# CS131-HW01
-Haskell Warmup for Programming Languages
+# CS131
+Repository for my CS131: Programming Languages course.
