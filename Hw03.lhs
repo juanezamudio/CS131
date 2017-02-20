@@ -74,6 +74,7 @@ Write an interpreter for boolean expressions over our prior arithmetic expressio
 > evalB store (And a b) = (evalB store a) && (evalB store b)
 
 
+
 Finally, we'll define a simple programming language. Its abstract
 syntax tree (AST) takes two type parameters: one identifying the
 arithmetic expressions we'll use, one identifying the boolean
@@ -90,9 +91,11 @@ expressions we'll use.
 Write an interpreter for this language.
 
 > eval :: Store -> Stmt AExp BExp -> Store
-
-
-> eval _ _ = undefined
+> eval store Skip = store
+> eval store (Assign s a) = Map.insert s (evalA store a) store
+> eval store (Seq a b) = eval (eval store a) b
+> eval store (If a b c) = if (evalB store a) then (eval store b) else (eval store c)
+> eval store (While a b) = if (evalB store a) then (eval (eval store b) (While a b)) else store
 
 
 <h3>Problem 2: While, with failures</h3>
