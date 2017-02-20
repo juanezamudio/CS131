@@ -38,10 +38,16 @@ Write an interpreter for these arithmetic expressions. When evaluating
 variables, you should return 0 if they're not in the store (such
 variables are called *unbound* or *undefined*).
 
+> fromMaybe :: Maybe Int -> Int
+> fromMaybe Nothing = 0
+> fromMaybe (Just x) = x
+
 > evalA :: Store -> AExp -> Int
-
-
-> evalA _ _ = undefined
+> evalA store (Var varname) = fromMaybe (Map.lookup varname store)
+> evalA _ (Num x) = x
+> evalA store (Plus a b) = (evalA store a) + (evalA store b)
+> evalA store (Times a b) = (evalA store a) * (evalA store b)
+> evalA store (Neg a) = negate (evalA store a)
 
 
 We can define boolean expressions similarly. Rather than concretely
@@ -60,9 +66,12 @@ take in a parameter.
 Write an interpreter for boolean expressions over our prior arithmetic expressions.
 
 > evalB :: Store -> BExp AExp -> Bool
-
-
-> evalB _ _ = undefined
+> evalB _ (Bool a) = a
+> evalB store (Equal a b) = (evalA store a) == (evalA store b)
+> evalB store (Lt a b) = (evalA store a) < (evalA store b)
+> evalB store (Not a) = not (evalB store a)
+> evalB store (Or a b) = (evalB store a) || (evalB store b)
+> evalB store (And a b) = (evalB store a) && (evalB store b)
 
 
 Finally, we'll define a simple programming language. Its abstract
