@@ -1,6 +1,8 @@
 Homework 3.0: The "While" programming language
 Due 2017-02-19
 
+Juan Zamudio
+
 > {-# OPTIONS_GHC -Wall -fno-warn-unused-imports #-}
 
 > {-# OPTIONS_GHC -W #-}
@@ -44,10 +46,10 @@ variables are called *unbound* or *undefined*).
 
 > evalA :: Store -> AExp -> Int
 > evalA store (Var varname) = fromMaybe (Map.lookup varname store)
-> evalA _ (Num x) = x
-> evalA store (Plus a b) = (evalA store a) + (evalA store b)
-> evalA store (Times a b) = (evalA store a) * (evalA store b)
-> evalA store (Neg a) = negate (evalA store a)
+> evalA _ (Num x)           = x
+> evalA store (Plus a b)    = (evalA store a) + (evalA store b)
+> evalA store (Times a b)   = (evalA store a) * (evalA store b)
+> evalA store (Neg a)       = negate (evalA store a)
 
 
 We can define boolean expressions similarly. Rather than concretely
@@ -66,12 +68,12 @@ take in a parameter.
 Write an interpreter for boolean expressions over our prior arithmetic expressions.
 
 > evalB :: Store -> BExp AExp -> Bool
-> evalB _ (Bool a) = a
+> evalB _ (Bool a)        = a
 > evalB store (Equal a b) = (evalA store a) == (evalA store b)
-> evalB store (Lt a b) = (evalA store a) < (evalA store b)
-> evalB store (Not a) = not (evalB store a)
-> evalB store (Or a b) = (evalB store a) || (evalB store b)
-> evalB store (And a b) = (evalB store a) && (evalB store b)
+> evalB store (Lt a b)    = (evalA store a) < (evalA store b)
+> evalB store (Not a)     = not (evalB store a)
+> evalB store (Or a b)    = (evalB store a) || (evalB store b)
+> evalB store (And a b)   = (evalB store a) && (evalB store b)
 
 
 
@@ -91,11 +93,15 @@ expressions we'll use.
 Write an interpreter for this language.
 
 > eval :: Store -> Stmt AExp BExp -> Store
-> eval store Skip = store
+> eval store Skip         = store
 > eval store (Assign s a) = Map.insert s (evalA store a) store
-> eval store (Seq a b) = eval (eval store a) b
-> eval store (If a b c) = if (evalB store a) then (eval store b) else (eval store c)
-> eval store (While a b) = if (evalB store a) then (eval (eval store b) (While a b)) else store
+> eval store (Seq a b)    = eval (eval store a) b
+> eval store (If a b c)   = if (evalB store a)
+>                           then (eval store b)
+>                           else (eval store c)
+> eval store (While a b)  = if (evalB store a)
+>                           then (eval (eval store b) (While a b))
+>                           else store
 
 
 <h3>Problem 2: While, with failures</h3>
@@ -120,7 +126,7 @@ default value of 0. In this version of the interpreter, make it so
 that unbound variables in arithmetic expressions cause errors, just
 like division. Here are the two errors that can happen:
 
-> data Error = NoSuchVariable VarName | DivideByZero AExp'
+> data Error = NoSuchVariable VarName | DivideByZero AExp' | BadInput String
 
 When you encounter an unbound variable, the error has a slot for
 identifying the culpable variable. Similarly, when you try to divide
@@ -129,11 +135,129 @@ not just the divisor. (In a more serious AST, we might keep track of
 the source file and line number each expression came from, in order to
 better indicate the source of the problem.)
 
+> instance Show Error where
+>     show (NoSuchVariable x) = "NoSuchVariable " ++ show(x)
+>     show (DivideByZero x)   = "DivideByZero " ++ show(x)
+>     show (BadInput x) = "BadInput " ++ show(x)
+
+> fromEither :: Store -> VarName -> Either Error Int
+> fromEither store var | find == Nothing = Left (NoSuchVariable var)
+>                      | otherwise       = Right (fromMaybe find)
+>                        where find      = Map.lookup var store
+
+> isLeft :: Either Error Int -> Bool
+> isLeft (Left _)  = True
+> isLeft (Right _) = False
+
+> getRValue :: Either Error Int -> Int
+> getRValue (Right a) = a
+> getRValue (Left _) = -1
+
+> evalA' :: Store -> AExp' -> Either Error Int
+> evalA' store (Var' a)     = fromEither store a
+> evalA' _ (Num' a)         = Right a
+> evalA' store (Plus' a b)  = if isLeft exp1
+>                             then exp1
+>                             else if isLeft exp2
+>                             then exp2
+>                             else Right ((getRValue exp1) + (getRValue exp2))
+>                             where exp1 = evalA' store a
+>                                   exp2 = evalA' store b
+> evalA' store (Times' a b) = if isLeft exp1
+>                             then exp1
+>                             else if isLeft exp2
+>                             then exp2
+>                             else Right ((getRValue exp1) * (getRValue exp2))
+>                             where exp1 = evalA' store a
+>                                   exp2 = evalA' store b
+> evalA' store (Neg' a) | isLeft (evalA' store a) = evalA' store a
+>                       | otherwise = Right (negate (getRValue (evalA' store a)))
+> evalA' store (Div' a b)   = if isLeft exp1
+>                             then exp1
+>                             else if isLeft exp2
+>                             then exp2
+>                             else if (getRValue exp2 == 0)
+>                             then (Left (DivideByZero b))
+>                             else Right ((getRValue exp1) `div` (getRValue exp2))
+>                             where exp1 = evalA' store a
+>                                   exp2 = evalA' store b
+
+> getBValueInt :: String -> Either Error Int -> Either Error Int -> Either Error Bool
+> getBValueInt _ (Left a)  _         = (Left a)
+> getBValueInt _ _         (Left b)  = (Left b)
+> getBValueInt p (Right a) (Right b) =
+>     case p of
+>     "==" -> (Right (a == b))
+>     "<"  -> (Right (a < b))
+>     _    -> Left (BadInput p)
+
+> getBValueBool :: String -> Either Error Bool -> Either Error Bool -> Either Error Bool
+> getBValueBool _ (Left a)  _         = Left a
+> getBValueBool _ _         (Left b)  = Left b
+> getBValueBool p (Right a) (Right b) =
+>     case p of
+>     "||" -> Right (a || b)
+>     "&&" -> Right (a && b)
+>     _    -> Left (BadInput p)
+
+> getBValueNot :: Either Error Bool -> Either Error Bool
+> getBValueNot (Left a)  = Left a
+> getBValueNot (Right a) = (Right (not a))
+
+
+> evalB' :: Store -> BExp AExp' -> Either Error Bool
+> evalB' _ (Bool a) = Right a
+> evalB' store (Equal a b) = getBValueInt "==" exp1 exp2
+>                            where exp1 = evalA' store a
+>                                  exp2 = evalA' store b
+> evalB' store (Lt a b)    = getBValueInt "<" exp1 exp2
+>                            where exp1 = evalA' store a
+>                                  exp2 = evalA' store b
+> evalB' store (Not a)     = getBValueNot e1
+>                            where e1 = evalB' store a
+> evalB' store (Or a b)    = getBValueBool "||" e1 e2
+>                            where e1 = evalB' store a
+>                                  e2 = evalB' store b
+> evalB' store (And a b)   = getBValueBool "&&" e1 e2
+>                            where e1 = evalB' store a
+>                                  e2 = evalB' store b
+
+> getRValue' :: Either Error Bool -> Bool
+> getRValue' (Right a) = a
+> getRValue' (Left _) = undefined
+
+> getLValue :: Either Error Bool -> Either Error Store
+> getLValue (Left a) = Left a
+> getLValue (Right _) = undefined
+
+> isLeft' :: Either Error Bool -> Bool
+> isLeft' (Left _) = True
+> isLeft' (Right _) = False
 
 > eval' :: Store -> Stmt AExp' BExp -> Either Error Store
-
-
-> eval' _ _ = undefined
+> eval' store Skip         = Right store
+> eval' store (Assign s a) =
+>     case evalA' store a of
+>     (Left exp1) -> Left exp1
+>     (Right exp1) -> Right (Map.insert s exp1 store)
+> eval' store (Seq a b)    =
+>     case eval' store a of
+>     (Left exp1) -> Left exp1
+>     (Right exp1) ->
+>         case eval' exp1 b of
+>         (Left exp2) -> Left exp2
+>         (Right exp2) -> Right exp2
+> eval' store (If a b c) | isLeft' (evalB' store a)    = getLValue (evalB' store a)
+>                        | getRValue' (evalB' store a) = eval' store b
+>                        | otherwise                   = eval' store c
+> eval' store (While a b) =
+>     case evalB' store a of
+>     (Left exp1)   -> Left exp1
+>     (Right False) -> eval' store Skip
+>     (Right True)  ->
+>         case eval' store b of
+>         (Left exp2)  -> Left exp2
+>         (Right exp2) -> eval' exp2 (While a b)
 
 
 <h3>Problem 3: Static analysis</h3>
@@ -159,7 +283,7 @@ Depending on what we know about `b`, we may or may not have a problem
 on our hands. Absent any information about `b`, it *could* happen that
 `ambiguous b` will try to read from `y` before it's defined.
 
-In PL, we tend to stay on the safe side: the general philosophy is
+In PLs, we tend to stay on the safe side: the general philosophy is
 that's better to have a false positive (saying a program is unsafe
 when it's actually fine) than to have a false negative (saying a
 program is safe when it isn't!). That is, PL prioritizes *soundness*
@@ -173,22 +297,27 @@ To get started, write functions that collect all of the variables that
 appear in given arithmetic and boolean expressions.
 
 > varsA :: AExp' -> Set VarName
+> varsA (Var' x)     = Set.fromList [x]
+> varsA (Num' _)     = Set.empty
+> varsA (Neg' x)     = varsA x
+> varsA (Plus' x y)  = Set.union (varsA x) (varsA y)
+> varsA (Times' x y) = Set.union (varsA x) (varsA y)
+> varsA (Div' x y)   = Set.union (varsA x) (varsA y)
 
 
-> varsA _ = undefined
-
-
-For example, `varsA (Times (Plus' (Var' "x") (Var' "y")) (Num 3)) ==
+For example, `varsA (Times' (Plus' (Var' "x") (Var' "y")) (Num' 3)) ==
 Set.fromList ["x", "y"]`.
 
 > varsB :: BExp AExp' -> Set VarName
+> varsB (Bool x) = Set.empty
+> varsB (Equal x y) = Set.union (varsA x) (varsA y)
+> varsB (Lt x y) = Set.union (varsA x) (varsA y)
+> varsB (Not x) = varsB x
+> varsB (Or x y) = Set.union (varsB x) (varsB y)
+> varsB (And x y) = Set.union (varsB x) (varsB y)
 
-
-> varsB _ = undefined
-
-
-For example, `varsB (Or (Not (Equal (Var' "foo") (Var' "bar"))) (Bool
-True)) == Set.fromList ["bar", "foo"]`.
+For example, `varsB (Or (Not (Equal (Var' "foo") (Var' "bar"))) (Bool True)) ==
+Set.fromList ["bar", "foo"]`.
 
 Now let's write our analysis: we'll take in a set of variables that we
 know to be defined, a statement in our language, and we'll return a
