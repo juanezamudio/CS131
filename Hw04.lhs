@@ -63,7 +63,19 @@ write several functions (`showTerm`, `showFactor`, etc.).
 
 
 > instance Show AExp where
->   show = undefined
+>   show (Var x)      = x
+>   show (Num x)      = show x
+>   show (Plus x y)   = case (x,y) of
+>                        (e1, Neg e2)       -> show e1 ++ " - " ++ show e2
+>                        (e1, Div e2 e3)    -> show e1 ++ " + (" ++ show (Div e2 e3) ++ ")"
+>                        (e1, e2)           -> show e1 ++ " + " ++ show e2
+>   show (Times x y)  = case (x,y) of
+>                        (e1, Plus e2 e3)  -> show e1 ++ " * (" ++ show (Plus e2 e3) ++ ")"
+>                        (e1, e2)          -> show e1 ++ " * " ++ show e2
+>   show (Neg x)      = "-" ++ show x
+>   show (Div x y)    = case (x,y) of
+>                         (e1, Plus e2 e3)  -> "(" ++ show e1 ++ " / " ++ show e2 ++ ") + " ++ show e3
+
 
 <h3>Problem 2: Parsing expressions by hand</h3>
 
@@ -129,11 +141,11 @@ a similar setup with `parseAFactor`, `parseAFactor'`, and
 `parseAFactor''`.
 
 > parseATerm :: [Token] -> Either String (AExp,[Token])
-> parseATerm ts = 
+> parseATerm ts =
 >   case parseAFactor ts of
 >     Right (f,ts) -> parseATerm' f ts
 >     Left e -> Left e
->       
+>
 > parseATerm' :: AExp -> [Token] -> Either String (AExp,[Token])
 > parseATerm' lhs [] = Right (lhs, [])
 > parseATerm' lhs (TPlus:ts) = parseATerm'' (Plus lhs) ts
@@ -146,29 +158,29 @@ parser. Adding niceties like this is called *syntactic sugar*.
 
 > parseATerm'' :: (AExp -> AExp) -> [Token] -> Either String (AExp,[Token])
 > parseATerm'' mk [] = Left $ "expected term after +/-"
-> parseATerm'' mk ts = 
+> parseATerm'' mk ts =
 >   case parseAFactor ts of
 >     Right (e,ts) -> parseATerm' (mk e) ts
 >     Left e -> Left e
-> 
+>
 > parseAFactor :: [Token] -> Either String (AExp,[Token])
 > parseAFactor ts =
 >   case parseAAtom ts of
 >     Right (lhs,ts) -> parseAFactor' lhs ts
 >     Left e -> Left e
->     
+>
 > parseAFactor' :: AExp -> [Token] -> Either String (AExp,[Token])
 > parseAFactor' lhs (TTimes:ts) = parseAFactor'' (Times lhs) ts
 > parseAFactor' lhs (TDiv:ts) = parseAFactor'' (Div lhs) ts
 > parseAFactor' lhs ts = Right (lhs, ts)
-> 
+>
 > parseAFactor'' :: (AExp -> AExp) -> [Token] -> Either String (AExp,[Token])
 > parseAFactor'' mk [] = Left $ "expected term after *"
-> parseAFactor'' mk ts = 
+> parseAFactor'' mk ts =
 >   case parseAAtom ts of
 >     Right (e,ts) -> parseAFactor' (mk e) ts
 >     Left e -> Left e
-> 
+>
 > parseAAtom :: [Token] -> Either String (AExp, [Token])
 > parseAAtom (TNum n:ts) = Right (Num n, ts)
 > parseAAtom (TId id:ts) = Right (Var id, ts)
@@ -217,15 +229,15 @@ of example programs to class so we can discuss them.
 You'll need to:
 
   1. Extend the `Token` type to account for other tokens (e.g., `WHILE`).
-  2. Change the lexer to find these new tokens. (Watch out for keyword/variable 
+  2. Change the lexer to find these new tokens. (Watch out for keyword/variable
      collisions!)
   3. Write a parser for boolean expressions. If you're wondering about
      precedence, think of `OR` like `+` and `AND` like `*`. For relations
      like `=` and `!=` and `>=`, they should be parsed under OR, e.g.,
-     `"x = y OR x < y AND y = z"` should parse as 
+     `"x = y OR x < y AND y = z"` should parse as
      `Or (Equal x y) (And (Lt x y) (Equal y z))`
   4. Write a parser for commands/statements.
-                
+
 You should *largely* be able to follow the pattern for arithmetic
 expressions established already, but you'll have to be creative in a
 few spots.
@@ -510,4 +522,3 @@ current indentation level, e.g., by taking an integer
 parameter. You'll need to be much more careful about whitespace in
 general and newlines in particular. Writing a whitespace-sensitive
 parser is hard. Let "testing" be your watchword!
-
