@@ -128,7 +128,7 @@ Okay: let's do it. Implement the Fisher-Yates shuffling algorithm that takes a g
 >   when (n /= 1) $ do
 >     _ <- writeArray arr j elemi
 >     _ <- writeArray arr (n-1) elemj
->     shuffle' start (n-1) arrr
+>     shuffle' start (n-1) arr
 
 Now use your array-based function `shuffle` to work on lists. Be sure
 to test your code on a wide variety of inputs!
