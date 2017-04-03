@@ -32,6 +32,8 @@ You are *of course* allowed to import other libraries. It may even make your sol
 > import qualified Data.Map as Map
 > import Data.Map (Map(..),(!))
 >
+> import qualified Data.List as List
+>
 > import System.Environment
 > import System.Exit
 > import System.IO
@@ -52,7 +54,7 @@ a random number `n` such that `low <= n <= high`, i.e., inclusively
 within the range.
 
 > rand :: Int -> Int -> IO Int
-> rand low high = undefined
+> rand low high = getStdRandom (randomR (low, high))
 
 Now write a function that takes a list and shuffles it. The
 straightforward algorithm is O(n<sup>2</sup>):
@@ -64,7 +66,14 @@ straightforward algorithm is O(n<sup>2</sup>):
 Don't worry, we'll speed it up in a minute.
 
 > shuffleList :: [a] -> IO [a]
-> shuffleList xs = undefined
+> shuffleList [] = return []
+> shuffleList xs = do
+>   randIndex <- rand 0 (length xs - 1)
+>   let
+>       (first, second) = splitAt randIndex xs
+>       y = head second
+>       ys = first ++ tail second
+>   (:) <$> return y <*> shuffleList ys
 
 
 Don't forget that you can run `:set +s` to get timing information in
@@ -100,13 +109,13 @@ are *inclusive*, per
 [`Data.Ix`](http://hackage.haskell.org/package/base-4.8.1.0/docs/Data-Ix.html).
 
 > listToArray :: [a] -> IO (IOArray Int a)
-> listToArray x = undefined
+> listToArray x = newListArray (0, length x - 1) x
 
-Okay: let's do it. Implement the Fisher--Yates shuffling algorithm that takes a given
-array and shuffles it.
+Okay: let's do it. Implement the Fisher-Yates shuffling algorithm that takes a given array and shuffles it.
 
 > shuffle :: IOArray Int a -> IO ()
-> shuffle arr = undefined
+> shuffle arr = do
+>   randIndex <- rand getBounds arr 
 
 
 Now use your array-based function `shuffle` to work on lists. Be sure
