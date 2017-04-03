@@ -109,14 +109,26 @@ are *inclusive*, per
 [`Data.Ix`](http://hackage.haskell.org/package/base-4.8.1.0/docs/Data-Ix.html).
 
 > listToArray :: [a] -> IO (IOArray Int a)
+> listToArray [] = newArray_ (0, 0)
 > listToArray x = newListArray (0, length x - 1) x
 
 Okay: let's do it. Implement the Fisher-Yates shuffling algorithm that takes a given array and shuffles it.
 
 > shuffle :: IOArray Int a -> IO ()
 > shuffle arr = do
->   randIndex <- rand getBounds arr 
+>   (start, n) <- getBounds arr
+>   shuffle' start n arr
 
+> shuffle' :: Int -> Int -> IOArray Int a -> IO ()
+> shuffle' start n arr = do
+>   j <- rand 0 (n-1)
+>   elemj <- readArray arr j
+>   elemi <- readArray arr (n-1)
+>
+>   when (n /= 1) $ do
+>     _ <- writeArray arr j elemi
+>     _ <- writeArray arr (n-1) elemj
+>     shuffle' start (n-1) arr
 
 Now use your array-based function `shuffle` to work on lists. Be sure
 to test your code on a wide variety of inputs!
