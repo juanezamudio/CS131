@@ -380,11 +380,14 @@ sure that it's the whole identifier. For example, `parse (kw "repeat")
 "repeat "` should return `Just ("repeat"," ")`, but `parse (kw
 "repeat") "repeatable"` should return `Nothing`.
 
-**HWHWHW** Write the that parses a keyword (you don't need to check
+**HWHWHW** Write the parser that parses a keyword (you don't need to check
 that the given string is in the list `keywords`).
 
 > kw :: String -> Parser String
-> kw s = undefined
+> kw s = Parser $ \s' ->
+>  case parse (str s) s' of 
+>   Just (a, xs) -> if (null xs) then Just (a, " ") else Nothing
+>   Nothing -> Nothing
 
 
 **HWHWHW** Now let's parse variables. A variable is (1) a string
