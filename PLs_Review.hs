@@ -113,3 +113,52 @@ instance Monad ((->) r) where
     -- (>>=) :: (r -> a) -> (a -> r -> b) -> (r -> b)
 
     ra >>= k = \r -> k (ra r) r
+
+
+
+-- Functions on Lists
+
+- head takes a list and returns its head. The head of a list is basically its first element.
+
+- tail takes a list and returns its tail. In other words, it chops off a list's head.
+
+- last takes a list and returns its last element.
+
+- init takes a list and returns everything except its last element.
+
+- length takes a list and returns its length, obviously.
+
+- null checks if a list is empty. If it is, it returns True, otherwise it returns False. Use this function instead of xs == [] (if you have a list called xs)
+
+- reverse reverses a list.
+
+- take takes number and a list. It extracts that many elements from the beginning of the list. Watch.
+
+- drop works in a similar way, only it drops the number of elements from the beginning of a list.
+
+- maximum takes a list of stuff that can be put in some kind of order and returns the biggest element.
+
+- minimum returns the smallest.
+
+- sum takes a list of numbers and returns their sum.
+
+- product takes a list of numbers and returns their product.
+
+- elem takes a thing and a list of things and tells us if that thing is an element of the list. It's usually called as an infix function because it's easier to read that way.
+
+- cycle takes a list and cycles it into an infinite list. If you just try to display the result, it will go on forever so you have to slice it off somewhere.
+
+- repeat takes an element and produces an infinite list of just that element. It's like cycling a list with only one element.
+
+- Although it's simpler to just use the replicate function if you want some number of the same element in a list. replicate 3 10 returns [10,10,10].
+
+-- Functions on Tuples
+
+- fst takes a pair and returns its first component.
+
+- snd takes a pair and returns its second component. Surprise!
+
+
+
+
+
